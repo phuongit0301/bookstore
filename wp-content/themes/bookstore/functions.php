@@ -2,6 +2,32 @@
     include('inc/wp_bootstrap_navwalker.php');
     include('inc/simple_html_dom.php');
 
+    // Retrieve the DOM from a given URL
+    $html = file_get_html('http://sstruyen.com/doc-truyen/tien-hiep/dai-la-thien-ton/quyen-2---chuong-52-hoa/624018.html');
+    foreach($html->find('div.detail-content') as $e) 
+        foreach($e->find('h3') as $elem) {
+            $elems = explode('-', $elem);
+            $bookNumbers = explode(' ', $elems[1]);
+            $chapters = explode(' ', explode(':', $elems[2])[0]);
+            $bookNumberData = 0;
+            $chapterData = 0;
+
+            foreach($bookNumbers as $bookNumber) {
+                if(is_numeric($bookNumber)) {
+                    $bookNumberData = $bookNumber;
+                }
+            }
+
+            foreach($chapters as $chapter) {
+                if(is_numeric($chapter)) {
+                    $chapterData = $chapter;
+                }   
+            }
+            //print_r($bookNumber);
+            print_r($bookNumberData);
+        }
+    exit;
+
     add_theme_support( 'html5', array(
         'search-form',
         'comment-form',
@@ -158,4 +184,15 @@
      function add_tags_for_attachments() {     
         register_taxonomy_for_object_type( 'post_tag', 'attachment' ); 
     } 
-        add_action( 'init' , 'add_tags_for_attachments' );
+    add_action( 'init' , 'add_tags_for_attachments' );
+
+    function get_dataa($url) {
+      $ch = curl_init();
+        $timeout = 5;
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+        $data = curl_exec($ch);
+        curl_close($ch);
+        return $data;
+    }
