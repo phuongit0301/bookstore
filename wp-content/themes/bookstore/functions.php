@@ -3,30 +3,28 @@
     include('inc/simple_html_dom.php');
 
     // Retrieve the DOM from a given URL
-    $html = file_get_html('http://sstruyen.com/doc-truyen/tien-hiep/dai-la-thien-ton/quyen-2---chuong-52-hoa/624018.html');
-    foreach($html->find('div.detail-content') as $e) 
-        foreach($e->find('h3') as $elem) {
-            $elems = explode('-', $elem);
-            $bookNumbers = explode(' ', $elems[1]);
-            $chapters = explode(' ', explode(':', $elems[2])[0]);
-            $bookNumberData = 0;
-            $chapterData = 0;
+    
+    /*$title = '';
+    $chapter = '';
+    $content = '';
+    $urls = array(
+        'http://thichdoctruyen.com/doc-truyen/dai-la-thien-ton/chuong-128-186676.html',
 
-            foreach($bookNumbers as $bookNumber) {
-                if(is_numeric($bookNumber)) {
-                    $bookNumberData = $bookNumber;
-                }
-            }
-
-            foreach($chapters as $chapter) {
-                if(is_numeric($chapter)) {
-                    $chapterData = $chapter;
-                }   
-            }
-            //print_r($bookNumber);
-            print_r($bookNumberData);
+    );
+    $html = file_get_html('http://thichdoctruyen.com/doc-truyen/sa-vao-treu-gheo-vo-yeu-tong-giam-doc-vo-cung-cung-chieu/chuong-1-190802.html');
+    foreach($html->find('.wapcat') as $e) {
+        foreach($e->find('span.focus') as $elem) {
+            $title = $elem;
         }
-    exit;
+
+        foreach($e->find('p.tenchuong') as $elem) {
+            $chapter = $elem;
+        }
+    }
+
+    foreach($html->find('div.boxview') as $elem) {
+        $content = $elem;
+    }*/
 
     add_theme_support( 'html5', array(
         'search-form',
@@ -195,4 +193,50 @@
         $data = curl_exec($ch);
         curl_close($ch);
         return $data;
+    }
+
+    add_action('init', 'insertData');
+
+    function insertData()
+    {
+        wp_defer_term_counting(true);
+
+        $tag = '';
+        $title = '';
+        $chapter = 0;
+        $bookNumber = 0;
+        $content = '';
+        $html = file_get_html('http://goctruyen.com/dai-la-thien-ton/dau-khi_333230.html');
+        foreach($html->find('ul.w3-ul') as $e) {
+            foreach($e->find('li>h1>a') as $elem) {
+                $tag = strtolower($elem->plaintext);
+            }
+
+            foreach($e->find('li>h3') as $elem) {
+                $arr = explode('-', $elem);
+                $arrBook = explode('.', $arr[0]);
+                $bookNumber = (int) $arrBook[1];
+                $arrChapter = explode(':', $arr[1]);
+
+                $chapter = explode(' ', $arrChapter[0])[2];
+                $title = str_replace('</h3>', '', $arrChapter[1]);
+            }
+        }
+
+        foreach($html->find('#content') as $e) {
+            $content = $e->inntertext;
+        }
+        $post_arr = array(
+            'post_title'   => $title,
+            'post_content' => $content,
+            'post_status'  => 'publish',
+            'post_type' => 'post',
+            'post_author' => get_current_user_id(),
+            'post_category' => array(7),
+            'tags_input' => $tag
+        );
+        $post_id = wp_insert_post($post_arr);
+
+        update_post_meta( $post_id, 'chapter', $chapter );   
+        update_post_meta( $post_id, 'book', $bookNumber );   
     }
