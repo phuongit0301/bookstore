@@ -195,9 +195,31 @@
         return $data;
     }
 
-    add_action('init', 'insertData');
+    //add_action('init', 'processBeforeInsertData');
 
-    function insertData()
+    function processBeforeInsertData()
+    {
+        $html = file_get_html('http://goctruyen.com/dai-la-thien-ton/8/');
+        $last = 1;
+        foreach($html->find('ul.w3-pagination') as $e) {
+            foreach($e->find('li') as $index => $lastElem) {
+                if($index == count($e->find('li')) - 1) {
+                    $last = $lastElem->plaintext;
+                }
+            }
+            $arrLast = explode(' ', $last);
+        }
+
+        for($i = 8; $i <= $arrLast[1]; $i++) {
+            foreach($html->find('ul.list-chapter-content>ul>li>a') as $e) {
+                if(strpos($e->href, '_')) {
+                    insertData($e->href);
+                }
+            }
+        }
+    }
+
+    function insertData($url)
     {
         wp_defer_term_counting(true);
 
@@ -206,7 +228,7 @@
         $chapter = 0;
         $bookNumber = 0;
         $content = '';
-        $html = file_get_html('http://goctruyen.com/dai-la-thien-ton/dau-khi_333230.html');
+        $html = file_get_html($url);
         foreach($html->find('ul.w3-ul') as $e) {
             foreach($e->find('li>h1>a') as $elem) {
                 $tag = strtolower($elem->plaintext);
@@ -225,6 +247,9 @@
 
         foreach($html->find('#content') as $e) {
             $content = $e->inntertext;
+            if(empty($content)) {
+                $content = $e;
+            }
         }
         $post_arr = array(
             'post_title'   => $title,
@@ -238,5 +263,6 @@
         $post_id = wp_insert_post($post_arr);
 
         update_post_meta( $post_id, 'chapter', $chapter );   
-        update_post_meta( $post_id, 'book', $bookNumber );   
+        update_post_meta( $post_id, 'book', $bookNumber );
+        return;
     }
