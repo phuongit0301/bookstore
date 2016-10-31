@@ -195,11 +195,11 @@
         return $data;
     }
 
-    //add_action('init', 'processBeforeInsertData');
+    add_action('init', 'processBeforeInsertData');
 
     function processBeforeInsertData()
     {
-        $html = file_get_html('http://goctruyen.com/dai-la-thien-ton/8/');
+        $html = file_get_html('http://goctruyen.com/dai-la-thien-ton/7/');
         $last = 1;
         foreach($html->find('ul.w3-pagination') as $e) {
             foreach($e->find('li') as $index => $lastElem) {
@@ -210,18 +210,25 @@
             $arrLast = explode(' ', $last);
         }
 
-        for($i = 8; $i <= $arrLast[1]; $i++) {
+        //for($i = 7; $i <= $arrLast[1]; $i++) {
             foreach($html->find('ul.list-chapter-content>ul>li>a') as $e) {
                 if(strpos($e->href, '_')) {
                     insertData($e->href);
                 }
             }
-        }
+        //}
     }
 
     function insertData($url)
     {
-        wp_defer_term_counting(true);
+        global $wpdb;
+        //wp_defer_term_counting(true);
+        ini_set("memory_limit",-1);
+        set_time_limit(0);
+        ignore_user_abort(true);
+        wp_defer_term_counting( true );
+        wp_defer_comment_counting( true );
+        $wpdb->query( 'SET autocommit = 0;' );
 
         $tag = '';
         $title = '';
@@ -264,5 +271,8 @@
 
         update_post_meta( $post_id, 'chapter', $chapter );   
         update_post_meta( $post_id, 'book', $bookNumber );
-        return;
+
+        $wpdb->query( 'COMMIT;' );
+        wp_defer_term_counting( false );
+        wp_defer_comment_counting( false );
     }

@@ -20,6 +20,8 @@
 
 // ** MySQL settings - You can get this info from your web host ** //
 /** The name of the database for WordPress */
+ini_set('memory_limit', '-1');
+
 define('DB_NAME', 'bookstore');
 
 /** MySQL database username */
